@@ -1,0 +1,13 @@
+# deploy / build artifacts
+.wrangler/
+*.zip
+
+# raw source originals (large, not needed to run the site)
+assets/_raw/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+node_modules/
+*.log
