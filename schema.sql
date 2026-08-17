@@ -1,0 +1,47 @@
+-- Beauty & Color Tattoo — D1 schema (News-CMS + Gutschein-Shop).
+-- Run once against your D1 database (see README-CMS.md).
+
+-- ========== NEWS / AKTUELLES ==========
+CREATE TABLE IF NOT EXISTS news (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  title      TEXT    NOT NULL,
+  body       TEXT    NOT NULL,
+  image_key  TEXT,
+  published  INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_news_public ON news (published, sort_order DESC, created_at DESC);
+
+-- ========== SHOP: BESTELLUNGEN ==========
+CREATE TABLE IF NOT EXISTS orders (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  paypal_order_id TEXT    UNIQUE,          -- PayPal-Order-ID (Idempotenz-Anker)
+  customer_email  TEXT    NOT NULL,
+  customer_name   TEXT,
+  items_json      TEXT    NOT NULL,        -- Snapshot der bestellten Positionen
+  amount_total    REAL    NOT NULL,        -- Brutto gesamt (inkl. MwSt + Versand)
+  amount_shipping REAL    NOT NULL DEFAULT 0,
+  amount_net      REAL    NOT NULL,        -- Netto (ohne MwSt)
+  amount_tax      REAL    NOT NULL,        -- MwSt-Betrag (19 %)
+  currency        TEXT    NOT NULL DEFAULT 'EUR',
+  status          TEXT    NOT NULL DEFAULT 'created', -- created|paid|failed|cancelled|refunded
+  created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+  paid_at         TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status, created_at DESC);
+
+-- ========== SHOP: GUTSCHEINE ==========
+CREATE TABLE IF NOT EXISTS vouchers (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id    INTEGER NOT NULL REFERENCES orders(id),
+  code        TEXT    NOT NULL UNIQUE,     -- BC-XXXX-XXXX
+  kind        TEXT    NOT NULL,            -- tattoo|piercing|seminar|custom
+  title       TEXT    NOT NULL,
+  value       REAL    NOT NULL,            -- Gutscheinwert (Brutto-Nennwert)
+  status      TEXT    NOT NULL DEFAULT 'active', -- active|redeemed|cancelled|expired
+  created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+  redeemed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_vouchers_order ON vouchers (order_id);

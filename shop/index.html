@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a090c">
+<title>Shop — Gutscheine &amp; Seminare · Beauty &amp; Color Tattoo Gelsenkirchen</title>
+<meta name="description" content="Tattoo- & Piercing-Gutscheine online kaufen bei Beauty & Color Tattoo Gelsenkirchen. Sicher bezahlen mit PayPal — auch Ratenzahlung & 30 Tage Zahlpause.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="https://beauty-color-tattoo-gelsenkirchen.pages.dev/shop/">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/web/brand/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/web/brand/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Beauty &amp; Color Tattoo">
+<meta property="og:title" content="Shop — Gutscheine &amp; Seminare · Beauty &amp; Color Tattoo">
+<meta property="og:description" content="Gutscheine online kaufen — sicher mit PayPal, auch Ratenzahlung.">
+<meta property="og:url" content="https://beauty-color-tattoo-gelsenkirchen.pages.dev/shop/">
+<meta property="og:image" content="https://beauty-color-tattoo-gelsenkirchen.pages.dev/assets/web/brand/og-cover.jpg">
+<link rel="stylesheet" href="/assets/css/fonts.css">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="preload">
+
+<div class="vignette" aria-hidden="true"></div>
+<canvas class="dust" id="dust" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav solid" id="nav">
+  <a class="nav__brand" href="/" aria-label="Beauty & Color Tattoo — Start">
+    <span class="nav__mark">B<em>&amp;</em>C</span>
+    <span class="nav__word">Beauty&nbsp;&amp;&nbsp;Color<small>Inktale® · Gelsenkirchen</small></span>
+  </a>
+  <nav class="nav__links" aria-label="Hauptmenü">
+    <a href="/#work">Arbeiten</a>
+    <a href="/#artists">Künstlerinnen</a>
+    <a href="/seminare/">Seminare</a>
+    <a href="/shop/">Shop</a>
+    <a href="/#visit">Besuch</a>
+  </nav>
+  <a href="/#visit" class="btn btn--pill nav__cta">Termin</a>
+  <button class="nav__burger" id="burger" aria-label="Menü öffnen" aria-expanded="false"><span></span><span></span></button>
+</header>
+
+<div class="menu" id="menu" aria-hidden="true">
+  <nav class="menu__inner">
+    <a href="/#work"><i>01</i>Arbeiten</a>
+    <a href="/#artists"><i>02</i>Nicole &amp; Marina</a>
+    <a href="/seminare/"><i>03</i>Seminare &amp; Ausbildung</a>
+    <a href="/shop/"><i>04</i>Shop &amp; Gutscheine</a>
+    <a href="/#visit"><i>05</i>Besuch &amp; Termin</a>
+    <a class="menu__cta" href="https://wa.me/4917684962255" target="_blank" rel="noopener">WhatsApp · 0176 84962255</a>
+  </nav>
+</div>
+
+<main class="page wrap">
+  <div class="page__head">
+    <p class="page__crumb"><a href="/">Start</a> — Shop</p>
+    <h1>Gutscheine &amp; <span class="scr">Seminare</span></h1>
+    <p class="shop__lead">Verschenke ein Tattoo, ein Piercing oder ein Seminar — sicher online mit
+      <strong>PayPal</strong>. Auf Wunsch mit <strong>Ratenzahlung</strong> oder
+      <strong>30 Tage Zahlpause</strong>.</p>
+  </div>
+
+  <div id="ppNotice" class="shop__notice" hidden></div>
+
+  <div class="shop__layout">
+    <!-- Produkte -->
+    <div class="shop__grid" id="products">
+      <article class="shop__card" data-id="tattoo-50" data-kind="tattoo" data-price="50" data-title="Tattoo-Gutschein 50 €">
+        <span class="shop__badge">Tattoo-Gutschein</span>
+        <h3>Tattoo-Gutschein — 50&nbsp;€</h3>
+        <p class="shop__desc">Ein Gutschein über 50&nbsp;€, einlösbar für Dein Tattoo im Studio.</p>
+        <p class="shop__price">50,00&nbsp;€ <small>inkl. MwSt.</small></p>
+        <button type="button" class="btn btn--fill shop__add">In den Warenkorb</button>
+      </article>
+
+      <article class="shop__card" data-id="tattoo-100" data-kind="tattoo" data-price="100" data-title="Tattoo-Gutschein 100 €">
+        <span class="shop__badge">Tattoo-Gutschein</span>
+        <h3>Tattoo-Gutschein — 100&nbsp;€</h3>
+        <p class="shop__desc">Ein Gutschein über 100&nbsp;€, einlösbar für Dein Tattoo im Studio.</p>
+        <p class="shop__price">100,00&nbsp;€ <small>inkl. MwSt.</small></p>
+        <button type="button" class="btn btn--fill shop__add">In den Warenkorb</button>
+      </article>
+
+      <article class="shop__card" data-id="piercing-50" data-kind="piercing" data-price="50" data-title="Piercing-Gutschein 50 €">
+        <span class="shop__badge">Piercing-Gutschein</span>
+        <h3>Piercing-Gutschein — 50&nbsp;€</h3>
+        <p class="shop__desc">Ein Gutschein über 50&nbsp;€ für ein Piercing inkl. Erstschmuck.</p>
+        <p class="shop__price">50,00&nbsp;€ <small>inkl. MwSt.</small></p>
+        <button type="button" class="btn btn--fill shop__add">In den Warenkorb</button>
+      </article>
+
+      <article class="shop__card" data-id="piercing-100" data-kind="piercing" data-price="100" data-title="Piercing-Gutschein 100 €">
+        <span class="shop__badge">Piercing-Gutschein</span>
+        <h3>Piercing-Gutschein — 100&nbsp;€</h3>
+        <p class="shop__desc">Ein Gutschein über 100&nbsp;€ für ein Piercing inkl. Erstschmuck.</p>
+        <p class="shop__price">100,00&nbsp;€ <small>inkl. MwSt.</small></p>
+        <button type="button" class="btn btn--fill shop__add">In den Warenkorb</button>
+      </article>
+
+      <article class="shop__card shop__card--custom" data-id="custom" data-kind="custom" data-title="Gutschein (Wunschbetrag)">
+        <span class="shop__badge">Wunschbetrag</span>
+        <h3>Gutschein — eigener Betrag</h3>
+        <p class="shop__desc">Bestimme den Wert selbst (ab 200&nbsp;€).</p>
+        <label class="shop__amount"><span>Betrag in €</span>
+          <input id="customAmount" type="number" min="200" step="10" value="200" inputmode="decimal"></label>
+        <button type="button" class="btn btn--fill shop__add">In den Warenkorb</button>
+      </article>
+    </div>
+
+    <!-- Warenkorb / Checkout -->
+    <aside class="cart" id="cart" aria-label="Warenkorb">
+      <h2 class="cart__title">Warenkorb</h2>
+      <ul class="cart__items" id="cartItems"></ul>
+      <p class="cart__empty" id="cartEmpty">Noch nichts im Warenkorb.</p>
+
+      <dl class="cart__totals" id="cartTotals" hidden>
+        <div><dt>Zwischensumme</dt><dd id="tSub">0,00 €</dd></div>
+        <div><dt>Versand / Bearbeitung</dt><dd id="tShip">1,80 €</dd></div>
+        <div class="cart__grand"><dt>Gesamt</dt><dd id="tTotal">0,00 €</dd></div>
+        <div class="cart__tax"><dt>inkl. 19 % MwSt.</dt><dd id="tTax">0,00 €</dd></div>
+      </dl>
+
+      <div class="cart__checkout" id="checkout" hidden>
+        <label class="cart__field">
+          <span>E-Mail (für den Gutschein)</span>
+          <input id="email" type="email" required inputmode="email" placeholder="deine@email.de">
+        </label>
+        <div id="paypal-buttons" class="cart__pp"></div>
+        <a class="cart__fallback" id="waFallback" href="https://wa.me/4917684962255" target="_blank" rel="noopener" hidden>Per WhatsApp bestellen →</a>
+        <p class="cart__paylater">PayPal · Ratenzahlung &amp; 30 Tage Zahlpause möglich (sofern von PayPal angeboten).</p>
+      </div>
+    </aside>
+  </div>
+
+  <div id="shopSuccess" class="shop__success" hidden role="status">
+    <h2 class="h-display">Danke für Deinen <em>Kauf!</em></h2>
+    <p>Deine Zahlung war erfolgreich. Deinen Gutschein findest Du hier und zusätzlich in Deiner E-Mail:</p>
+    <ul id="successVouchers" class="shop__vouchers"></ul>
+    <p class="shop__success-note">Bei Fragen schreib uns auf <a href="https://wa.me/4917684962255" target="_blank" rel="noopener">WhatsApp</a>.</p>
+  </div>
+
+  <p class="shop__legal">Preise inkl. gesetzl. MwSt. zzgl. 1,80&nbsp;€ Versand/Bearbeitung · Gutscheine werden
+    digital per E-Mail zugestellt · Zahlung &amp; Ratenzahlung über PayPal · Es gelten unser
+    <a href="/impressum/">Impressum</a> und die <a href="/datenschutz/">Datenschutzerklärung</a>.</p>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__grid">
+    <div class="foot__brand">
+      <span class="nav__mark">B<em>&amp;</em>C</span>
+      <p>Beauty &amp; Color Tattoo — INKTALE®<br>Deine Geschichte. Dein Tattoo.</p>
+    </div>
+    <nav class="foot__nav">
+      <a href="/#work">Arbeiten</a><a href="/seminare/">Seminare</a>
+      <a href="/shop/">Shop</a><a href="/#visit">Termin</a>
+    </nav>
+    <div class="foot__social">
+      <a href="https://www.instagram.com/beauty_and_color_tattoo/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.facebook.com/Beautyandcolortattoo/" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://wa.me/4917684962255" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </div>
+  <div class="wrap foot__base">
+    <span>© <span id="yr"></span> Beauty &amp; Color Tattoo · Gelsenkirchen-Buer</span>
+    <nav class="foot__legal" aria-label="Rechtliches">
+      <a href="/impressum/">Impressum</a>
+      <a href="/datenschutz/">Datenschutz</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="/assets/js/legal.js" defer></script>
+<script src="shop.js" defer></script>
+</body>
+</html>

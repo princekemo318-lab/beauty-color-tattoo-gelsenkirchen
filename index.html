@@ -113,10 +113,9 @@
   </a>
   <nav class="nav__links" aria-label="Hauptmenü">
     <a href="#work">Arbeiten</a>
-    <a href="#transform">Cover-Up</a>
     <a href="#artists">Künstlerinnen</a>
     <a href="#seminare">Seminare</a>
-    <a href="#story">Mutmacher</a>
+    <a href="/shop/">Shop</a>
     <a href="#visit">Besuch</a>
   </nav>
   <a href="#visit" class="btn btn--pill nav__cta">Termin</a>
@@ -130,9 +129,10 @@
     <a href="#transform"><i>02</i>Cover-Up &amp; Transformation</a>
     <a href="#artists"><i>03</i>Nicole &amp; Marina</a>
     <a href="#seminare"><i>04</i>Seminare &amp; Ausbildung</a>
-    <a href="#story"><i>05</i>Mutmacher-Tattoos</a>
-    <a href="#why"><i>06</i>Warum wir</a>
-    <a href="#visit"><i>07</i>Besuch &amp; Termin</a>
+    <a href="/shop/"><i>05</i>Shop &amp; Gutscheine</a>
+    <a href="#story"><i>06</i>Mutmacher-Tattoos</a>
+    <a href="#why"><i>07</i>Warum wir</a>
+    <a href="#visit"><i>08</i>Besuch &amp; Termin</a>
     <a class="menu__cta" href="https://wa.me/4917684962255" target="_blank" rel="noopener">WhatsApp · 0176 84962255</a>
   </nav>
 </div>
@@ -194,6 +194,15 @@
       <li class="reveal"><b class="is-word">Safe<br>place</b><span>No Bodyshaming</span></li>
     </ul>
   </div>
+</section>
+
+<!-- ░░ NEWS / AKTUELLES (CMS · lazy-loaded, hidden until data arrives) ░░ -->
+<section class="news" id="news" hidden aria-label="Aktuelles aus dem Studio">
+  <div class="wrap news__head">
+    <p class="kicker">Aktuelles</p>
+    <h2 class="h-display">News aus dem <em>Studio.</em></h2>
+  </div>
+  <div class="wrap news__grid" id="newsGrid"></div>
 </section>
 
 <!-- ░░ GALLERY ░░ -->
@@ -425,7 +434,7 @@
     </div>
     <nav class="foot__nav">
       <a href="#work">Arbeiten</a><a href="#transform">Cover-Up</a>
-      <a href="#artists">Künstlerinnen</a><a href="/seminare/">Seminare</a><a href="#visit">Termin</a>
+      <a href="#artists">Künstlerinnen</a><a href="/seminare/">Seminare</a><a href="/shop/">Shop</a><a href="#visit">Termin</a>
     </nav>
     <div class="foot__social">
       <a href="https://www.instagram.com/beauty_and_color_tattoo/" target="_blank" rel="noopener">Instagram</a>
@@ -456,5 +465,6 @@
 <script src="assets/js/data.js"></script>
 <script type="module" src="assets/js/hero.js"></script>
 <script src="assets/js/app.js" defer></script>
+<script src="assets/js/news.js" defer></script>
 </body>
 </html>

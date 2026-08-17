@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a090c">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin — Beauty &amp; Color Tattoo</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="/assets/css/fonts.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header class="ad-top">
+  <div class="ad-brand"><span class="ad-mark">B<em>&amp;</em>C</span> <b>Beauty &amp; Color</b><span class="ad-tag">Admin</span></div>
+  <a class="ad-view" href="/" target="_blank" rel="noopener">Website ansehen ↗</a>
+</header>
+
+<nav class="ad-tabs">
+  <button type="button" class="ad-tab on" data-tab="news">News</button>
+  <button type="button" class="ad-tab" data-tab="orders">Bestellungen &amp; Gutscheine</button>
+</nav>
+
+<main class="ad-wrap" id="tab-news">
+  <!-- Liste -->
+  <section class="ad-panel ad-list">
+    <div class="ad-panel-head">
+      <h2>News</h2>
+      <button id="newBtn" class="ad-btn ad-btn--gold" type="button">+ Neue News</button>
+    </div>
+    <ul id="list" class="ad-items" aria-live="polite"></ul>
+    <p id="listEmpty" class="ad-empty" hidden>Noch keine News. Erstelle die erste.</p>
+  </section>
+
+  <!-- Editor -->
+  <section class="ad-panel ad-editor">
+    <h2 id="editorTitle">Neue News</h2>
+    <form id="form" autocomplete="off">
+      <label class="ad-field">
+        <span>Titel</span>
+        <input id="f-title" type="text" maxlength="140" required placeholder="z. B. Neue Termine im September">
+      </label>
+
+      <label class="ad-field">
+        <span>Text</span>
+        <textarea id="f-body" rows="7" maxlength="4000" required placeholder="Kurzer Text … Leerzeile = neuer Absatz."></textarea>
+        <small>Nur Text. Leerzeile lässt einen neuen Absatz entstehen.</small>
+      </label>
+
+      <div class="ad-field">
+        <span>Bild <em>(optional)</em></span>
+        <input id="f-image" type="file" accept="image/jpeg,image/png,image/webp" class="ad-file">
+        <div id="preview" class="ad-preview" hidden>
+          <img id="prev-img" alt="Vorschau">
+          <button type="button" id="rm-img" class="ad-btn ad-btn--small">Bild entfernen</button>
+        </div>
+        <small id="imgHint">JPEG, PNG oder WebP. Wird automatisch verkleinert.</small>
+      </div>
+
+      <div class="ad-row">
+        <label class="ad-check"><input id="f-pub" type="checkbox"> <span>Veröffentlicht</span></label>
+        <label class="ad-sort"><span>Reihenfolge</span><input id="f-sort" type="number" value="0" step="1"></label>
+      </div>
+
+      <div class="ad-actions">
+        <button type="submit" id="saveBtn" class="ad-btn ad-btn--gold">Veröffentlichen</button>
+        <button type="button" id="cancelBtn" class="ad-btn">Abbrechen</button>
+        <button type="button" id="deleteBtn" class="ad-btn ad-btn--danger" hidden>Löschen</button>
+      </div>
+      <p id="msg" class="ad-msg" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<section class="ad-orders" id="tab-orders" hidden>
+  <div class="ad-panel">
+    <div class="ad-panel-head">
+      <h2>Bestellungen &amp; Gutscheine</h2>
+      <button id="ordersReload" class="ad-btn" type="button">Aktualisieren</button>
+    </div>
+    <div id="ordersList" class="ad-orders-list" aria-live="polite"></div>
+    <p id="ordersEmpty" class="ad-empty" hidden>Noch keine Bestellungen.</p>
+    <p id="ordersMsg" class="ad-msg"></p>
+  </div>
+</section>
+
+<script src="admin.js" defer></script>
+</body>
+</html>
