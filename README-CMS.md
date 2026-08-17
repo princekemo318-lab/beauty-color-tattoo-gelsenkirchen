@@ -45,22 +45,26 @@ wrangler.toml            # Pages + D1/R2 Bindings + Access-Variablen
 
 Voraussetzung: eingeloggt via `npx wrangler login` (Konto `ourragency@gmail.com`).
 
-### a) D1-Datenbank
+### a) D1-Datenbank — ✅ ERLEDIGT (17.08.2026)
 ```bash
 npx wrangler d1 create bct-news
-```
-Die ausgegebene **`database_id`** in `wrangler.toml` bei `[[d1_databases]]` eintragen.
-
-Schema einspielen (Produktion):
-```bash
 npx wrangler d1 execute bct-news --remote --file=./schema.sql
 ```
+Angelegt im Konto `ourragency@gmail.com` (Prince, `9a0b633e…`), Region **WEUR**.
+`database_id = 69945e9b-e38e-4a3c-b3c6-f7a73a4d03d2` steht in `wrangler.toml`.
+Schema eingespielt: Tabellen `news`, `orders`, `vouchers` + Indizes.
 
-### b) R2-Bucket
+### b) R2-Bucket — ⚠️ OFFEN: R2 muss einmalig aktiviert werden
+`wrangler r2 bucket create bct-news-images` schlägt mit
+`Please enable R2 through the Cloudflare Dashboard [code: 10042]` fehl, solange R2 im Konto
+nicht freigeschaltet ist. Einmalig im Dashboard: **R2 Object Storage → Get started / Enable**
+(Zahlungsmittel hinterlegen; das kostenlose Kontingent reicht für News-Bilder). Danach:
 ```bash
 npx wrangler r2 bucket create bct-news-images
 ```
 (Bucket **privat lassen** — Bilder werden über `/img/*` ausgeliefert.)
+R2 wird **nur für News-Bilder** gebraucht: News mit Text funktionieren auch ohne, der
+Bild-Upload gibt bis dahin einen Fehler zurück. Der **Shop braucht R2 nicht**.
 
 ### c) Cloudflare Access für `/admin`
 Zero Trust Dashboard → **Access → Applications → Add an application → Self-hosted**:
@@ -124,18 +128,17 @@ Kein GitHub, kein Code, kein FTP. Nur Login → schreiben → speichern.
 
 ## 5) Shop
 
-`/shop/` zeigt die realen Produkte (Gutscheine 50/100 €, Piercing-Seminar 799 €, Wunschbetrag)
-im Marken-Design mit **PayPal Smart Buttons** (inkl. Ratenzahlung / 30 Tage Zahlpause).
+`/shop/` verkauft Gutscheine (Tattoo/Piercing je 50 €/100 € sowie Wunschbetrag ab 200 €) im
+Marken-Design mit **PayPal Smart Buttons** (inkl. Ratenzahlung / 30 Tage Zahlpause). Das
+Piercing-Seminar ist **kein** Shop-Artikel — Anfrage über `/seminare/`.
 
-**Zu erledigen:** In `shop/shop.js` die Zeile
-`var PAYPAL_CLIENT_ID = "REPLACE_WITH_YOUR_PAYPAL_CLIENT_ID";`
-durch die **öffentliche PayPal-Client-ID** des Studios ersetzen
-(PayPal Developer Dashboard → Apps & Credentials → Live → Client ID).
-Solange das nicht gesetzt ist, zeigt der Shop automatisch einen **WhatsApp-Bestell-Fallback**.
+Die PayPal-Client-ID kommt **serverseitig** über `GET /api/shop/config` aus dem Secret
+`PAYPAL_CLIENT_ID`; im Frontend steht keine ID. Solange die Secrets fehlen, zeigt der Shop
+automatisch den **WhatsApp-Bestell-Fallback**. Details: **README-SHOP.md**.
 
-**Rechtlicher Hinweis (wichtig für einen echten Online-Verkauf in DE):** Für einen
-vollwertigen Shop werden zusätzlich **AGB** und eine **Widerrufsbelehrung** benötigt, und die
-MwSt-/Rechnungspflichten sind zu beachten. Impressum & Datenschutz sind bereits vorhanden.
+**Rechtliches:** `/agb/` und `/widerruf/` sind angelegt und im Checkout per Pflicht-Checkbox
+verlinkt; sie basieren auf den bestehenden Studio-AGB und sind vor dem Verkaufsstart von der
+Inhaberin zu prüfen (siehe README-SHOP.md → „Rechtliches"). MwSt-/Rechnungspflichten beachten.
 
 ---
 

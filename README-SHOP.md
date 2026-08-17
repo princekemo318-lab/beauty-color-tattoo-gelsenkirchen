@@ -91,7 +91,26 @@ Kunde/E-Mail, Betrag, MwSt, Status, Datum und Gutschein-Codes; Codes lassen sich
 - [x] Kein Framework, kein Bundle; Warenkorb ist leichtes Vanilla-JS.
 - [x] Gutscheinseite selbst-enthalten, `noindex`.
 
-## Offener rechtlicher Punkt
-Für den echten Verkauf werden zusätzlich **AGB** und eine **Widerrufsbelehrung** benötigt
-(Impressum & Datenschutz sind vorhanden). Sag Bescheid — ich lege Standard-Seiten `/agb/`
-und `/widerruf/` an, die Du/ein Anwalt final prüft (ich erfinde keine rechtlichen Bedingungen).
+## Rechtliches (angelegt — vor Verkaufsstart prüfen)
+- `/agb/` — **Grundlage sind die bestehenden AGB des Studios** (Termin/Kaution 50–100 €,
+  Verschiebung 14/7 Tage, Ausfallhonorar 150 €, Nachstechen 35 €, Pflege, Hygiene,
+  Urheberrecht an Vorlagen), ergänzt um die Shop-Paragraphen (Vertragsschluss, Preise +
+  1,80 € Pauschale, PayPal, digitale Zustellung, Gutscheineinlösung/-gültigkeit, Widerruf,
+  Haftung, Schlussbestimmungen).
+- `/widerruf/` — Widerrufsbelehrung + Muster-Widerrufsformular, im Wortlaut am gesetzlichen
+  Muster (Anlage 1/2 zu Art. 246a § 1 Abs. 2 EGBGB) orientiert, daher in der **Sie-Form**.
+- Im Checkout muss vor dem Bezahlen die **Checkbox „AGB + Widerrufsbelehrung"** bestätigt werden
+  (`#agbOk`, Prüfung in `shop/shop.js` vor `create-order`).
+- Beide Seiten sind in Footer (alle Seiten), Shop-Fußzeile und `sitemap.xml` verlinkt.
+
+**Vor dem Verkaufsstart entscheiden/prüfen lassen:**
+1. Haftungsklausel (§ 14) ersetzt die pauschale „keinerlei Haftung"-Formulierung der Alt-AGB —
+   eine pauschale Freizeichnung wäre gegenüber Verbrauchern unwirksam.
+2. Neu hinzugefügte, im Alt-Text nicht enthaltene Punkte: Volljährigkeit/Gesundheitsangaben
+   (§ 10), Fotoveröffentlichung nur mit Einwilligung (§ 11), Nachweisvorbehalt bei
+   Kaution/Ausfallhonorar (§ 8), Gutschein-Restwert als Guthaben (§ 6).
+3. **Teil-Einlösung** ist in der Software nicht abgebildet: Ein Code hat nur
+   `aktiv`/`eingelöst`. Ein Restguthaben (§ 6 AGB) muss im Studio manuell notiert werden —
+   oder wir bauen Teilbeträge nachträglich in D1 ein.
+4. Kleinunternehmerregelung? Der Shop weist **19 % MwSt** aus — nur korrekt, wenn das Studio
+   regelbesteuert ist.

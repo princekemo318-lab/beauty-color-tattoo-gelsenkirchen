@@ -11,7 +11,7 @@ compatibility_date = "2024-11-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "bct-news"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "69945e9b-e38e-4a3c-b3c6-f7a73a4d03d2"
 
 # --- R2: uploaded news images ---
 [[r2_buckets]]

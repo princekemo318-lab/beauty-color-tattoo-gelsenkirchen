@@ -630,3 +630,16 @@ body.preload *{animation-play-state:paused!important}
   .reveal{opacity:1;transform:none}
   .dust{display:none}
 }
+
+/* ============================================================
+   RECHTLICHES: AGB / WIDERRUF + AGB-BESTÄTIGUNG IM CHECKOUT
+   (nur angehängt — bestehende Regeln unverändert)
+   ============================================================ */
+.legal__form{margin-top:1rem}
+.legal__form p{margin-bottom:.55rem;color:var(--bone-2)}
+.legal__form p:last-child{margin-bottom:0}
+
+.cart__consent{display:flex;align-items:flex-start;gap:.6rem;margin:0 0 1rem;cursor:pointer}
+.cart__consent input{flex:0 0 auto;margin-top:.15rem;width:1.05rem;height:1.05rem;accent-color:var(--gold)}
+.cart__consent span{font-size:.78rem;line-height:1.55;color:var(--bone-2)}
+.cart__consent a{color:var(--gold-lt);text-decoration:underline;text-underline-offset:2px}

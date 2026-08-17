@@ -118,6 +118,8 @@
         if (!cart.length) { setNotice("Dein Warenkorb ist leer.", true); return Promise.reject(); }
         var email = ($("email").value || "").trim();
         if (!validEmail(email)) { setNotice("Bitte eine gültige E-Mail-Adresse angeben.", true); $("email").focus(); return Promise.reject(); }
+        var agb = $("agbOk");
+        if (agb && !agb.checked) { setNotice("Bitte bestätige AGB und Widerrufsbelehrung.", true); agb.focus(); return Promise.reject(); }
         setNotice("", false);
         return fetch("/api/shop/paypal/create-order", {
           method: "POST", headers: { "content-type": "application/json" },
