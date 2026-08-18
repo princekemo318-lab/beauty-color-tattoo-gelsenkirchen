@@ -32,31 +32,37 @@ Der Client kann **nie** Preis, Zahlungsstatus oder Gutscheinwert bestimmen.
 Die D1-Tabellen `orders` + `vouchers` sind bereits in `schema.sql` — einmal ausführen
 (`wrangler d1 execute bct-news --remote --file=./schema.sql`). R2 wird für den Shop **nicht** benötigt.
 
-### PayPal — das Einzige, was am Termin noch fehlt
-Der Code ist vollständig; es fehlen nur die echten Zugangsdaten. Genau **drei Secrets**:
+### PayPal + Resend — ab jetzt im Admin einzutragen (kein Code, kein Deployment)
+`/admin` → Tab **Shop-Einstellungen**:
 
-| Secret | Woher | Wozu |
-|---|---|---|
-| `PAYPAL_CLIENT_ID` | developer.paypal.com → Apps & Credentials → **Live** → App → Client ID | Buttons im Shop + Server-Auth |
-| `PAYPAL_SECRET` | dieselbe App → Secret | Server-Auth (streng geheim) |
-| `PAYPAL_WEBHOOK_ID` | Webhooks → Add Webhook → nach dem Anlegen die **Webhook-ID** | Signaturprüfung der Webhooks |
+| Feld | Woher |
+|---|---|
+| PayPal Client ID | developer.paypal.com → Apps & Credentials → **Live** → App → Client ID |
+| PayPal Secret | dieselbe App → Secret |
+| PayPal Webhook ID | Webhooks → Add Webhook → danach die **Webhook-ID** |
+| PayPal Umgebung | Sandbox zum Testen, **Live** für echtes Geld |
+| Resend API Key | resend.com → API Keys (optional, für die Gutschein-Mail) |
+| Absender-E-Mail | bei Resend verifizierte Adresse |
 
-Setzen (oder Dashboard → Pages → Settings → Variables and Secrets → **Secret**):
-```bash
-npx wrangler pages secret put PAYPAL_CLIENT_ID  --project-name beauty-color-tattoo-gelsenkirchen
-npx wrangler pages secret put PAYPAL_SECRET     --project-name beauty-color-tattoo-gelsenkirchen
-npx wrangler pages secret put PAYPAL_WEBHOOK_ID --project-name beauty-color-tattoo-gelsenkirchen
-```
 Webhook-URL im PayPal-Dashboard:
 `https://beauty-color-tattoo-gelsenkirchen.pages.dev/api/shop/paypal/webhook`
 Events: **PAYMENT.CAPTURE.COMPLETED** und **CHECKOUT.ORDER.COMPLETED**.
 
-Zuletzt `PAYPAL_ENV` von `"sandbox"` auf `"live"` stellen (`wrangler.toml` oder als Variable).
-Solange die Secrets fehlen, zeigt der Shop automatisch den WhatsApp-Fallback — es entsteht
-nie eine halbfertige Bestellung.
+Danach **„Verbindung testen"** klicken — der Server holt ein PayPal-Token und prüft den
+Resend-Schlüssel; es steht sofort da, ob die Daten stimmen.
 
-**Ratenzahlung / 30 Tage Zahlpause** sind bereits aktiviert (`enable-funding=paylater` beim
-SDK-Laden). Ob sie einer Käuferin angeboten werden, entscheidet allein PayPal.
+**Wie die Werte gespeichert werden:** in der D1-Tabelle `settings`; Secret, Webhook-ID und
+Resend-Key **AES-GCM-verschlüsselt** (Schlüssel = Pages-Secret `SETTINGS_KEY`, liegt außerhalb
+der Datenbank). Zurück ins Admin-UI geht nur „gesetzt/nicht gesetzt" plus die letzten vier
+Zeichen. Die Client ID ist bewusst öffentlich — das PayPal-SDK braucht sie im Browser.
+
+Admin-Werte haben **Vorrang** vor gleichnamigen Umgebungsvariablen. Als Secrets gesetzt werden
+müssen sie also nicht mehr; `wrangler pages secret put PAYPAL_*` funktioniert weiterhin als
+Alternative.
+
+Solange die Zugangsdaten fehlen, zeigt der Shop den WhatsApp-Fallback — es entsteht nie eine
+halbfertige Bestellung. **Ratenzahlung / 30 Tage Zahlpause** sind aktiv (`enable-funding=paylater`);
+ob sie angeboten werden, entscheidet PayPal.
 
 ### Lokal testen ohne echte Zugangsdaten
 `functions/_shared/paypal.js` akzeptiert `PAYPAL_ENV="mock"` zusammen mit `PAYPAL_MOCK_BASE`.
