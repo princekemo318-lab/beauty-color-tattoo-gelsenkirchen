@@ -14,9 +14,13 @@ database_name = "bct-news"
 database_id = "69945e9b-e38e-4a3c-b3c6-f7a73a4d03d2"
 
 # --- R2: uploaded news images ---
-[[r2_buckets]]
-binding = "NEWS_BUCKET"
-bucket_name = "bct-news-images"
+# DEAKTIVIERT, bis R2 im Cloudflare-Konto freigeschaltet und der Bucket angelegt ist
+# (sonst schlaegt jedes Deployment fehl: "R2 bucket 'bct-news-images' not found").
+# Danach: npx wrangler r2 bucket create bct-news-images  →  diese drei Zeilen wieder aktivieren.
+# Ohne R2: Text-News funktionieren normal, nur der Bild-Upload meldet 503.
+# [[r2_buckets]]
+# binding = "NEWS_BUCKET"
+# bucket_name = "bct-news-images"
 
 # --- Admin-Login (eigener Login — KEIN Cloudflare Access / Zero Trust) ---
 [vars]

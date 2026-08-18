@@ -7,7 +7,7 @@ const MAX_BYTES = 4 * 1024 * 1024; // 4 MB (admin resizes client-side first)
 export async function onRequestPost({ request, env }) {
   const id = await getIdentity(request, env);
   if (!id) return unauthorized();
-  if (!env.NEWS_BUCKET) return json({ error: "R2 nicht konfiguriert" }, 500);
+  if (!env.NEWS_BUCKET) return json({ error: "Bild-Upload ist noch nicht aktiv — R2 im Cloudflare-Dashboard freischalten. Text-News funktionieren." }, 503);
 
   const ct = request.headers.get("content-type") || "";
   if (!ct.includes("multipart/form-data")) return json({ error: "multipart/form-data erwartet" }, 400);
