@@ -234,12 +234,13 @@
   /* ---------- Shop-Einstellungen ---------- */
   var SET_KEYS = ["PAYPAL_CLIENT_ID", "PAYPAL_SECRET", "PAYPAL_WEBHOOK_ID", "PAYPAL_ENV",
                   "RESEND_API_KEY", "MAIL_FROM"];
-  var setForm = $("setForm"), setMsg = $("setMsg");
+  // ACHTUNG: nicht "setMsg" nennen — so heisst oben die Funktion fuer die News-Meldungen.
+  var setForm = $("setForm"), setMsgEl = $("setMsg");
 
   function setSetMsg(text, kind) {
-    if (!setMsg) return;
-    setMsg.textContent = text || "";
-    setMsg.className = "ad-msg" + (kind ? " " + kind : "");
+    if (!setMsgEl) return;
+    setMsgEl.textContent = text || "";
+    setMsgEl.className = "ad-msg" + (kind ? " " + kind : "");
   }
 
   function loadSettings() {
