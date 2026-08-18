@@ -643,3 +643,7 @@ body.preload *{animation-play-state:paused!important}
 .cart__consent input{flex:0 0 auto;margin-top:.15rem;width:1.05rem;height:1.05rem;accent-color:var(--gold)}
 .cart__consent span{font-size:.78rem;line-height:1.55;color:var(--bone-2)}
 .cart__consent a{color:var(--gold-lt);text-decoration:underline;text-underline-offset:2px}
+
+/* Hinweis auf die zahlungspflichtige Bestellung (§ 312j Abs. 3 BGB) */
+.cart__obligation{margin:0 0 .8rem;font-size:.8rem;line-height:1.5;color:var(--bone-2);text-align:center}
+.cart__obligation strong{color:var(--gold-lt)}
