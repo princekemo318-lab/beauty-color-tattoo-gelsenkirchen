@@ -53,9 +53,26 @@ export async function onRequestPost({ request, env }) {
       const r = await fetch("https://api.resend.com/domains", {
         headers: { authorization: `Bearer ${cfg.RESEND_API_KEY}` },
       });
-      result.resend = r.ok
-        ? { ok: true, msg: "Resend-Schlüssel gültig. Absender: " + cfg.MAIL_FROM }
-        : { ok: false, msg: "Resend lehnt den Schlüssel ab (Status " + r.status + ")." };
+      if (!r.ok) {
+        result.resend = { ok: false, msg: "Resend lehnt den Schlüssel ab (Status " + r.status + ")." };
+      } else {
+        // Der Schlüssel allein genügt nicht: Resend verschickt nur von einer VERIFIZIERTEN
+        // Domain an beliebige Empfänger. Deshalb hier zusätzlich die Absender-Domain prüfen.
+        const data = await r.json();
+        const domains = (data && data.data) || [];
+        const senderDomain = String(cfg.MAIL_FROM).split("@")[1] || "";
+        const match = domains.find((d) => String(d.name).toLowerCase() === senderDomain.toLowerCase());
+
+        if (match && match.status === "verified") {
+          result.resend = { ok: true, msg: "Bereit — Versand von " + cfg.MAIL_FROM + " ist verifiziert." };
+        } else if (match) {
+          result.resend = { ok: false, msg: "Die Domain " + senderDomain + " ist in Resend angelegt, aber noch nicht verifiziert (Status: " + match.status + "). Bitte die DNS-Einträge setzen — bis dahin werden keine Gutschein-Mails zugestellt." };
+        } else if (domains.length) {
+          result.resend = { ok: false, msg: "Der Absender " + cfg.MAIL_FROM + " gehört zu keiner in Resend hinterlegten Domain. Verfügbar: " + domains.map((d) => d.name + " (" + d.status + ")").join(", ") + "." };
+        } else {
+          result.resend = { ok: false, msg: "Schlüssel gültig, aber in Resend ist keine Absender-Domain hinterlegt — es können nur Mails an die eigene Kontoadresse zugestellt werden." };
+        }
+      }
     } catch {
       result.resend = { ok: false, msg: "Resend war nicht erreichbar." };
     }
