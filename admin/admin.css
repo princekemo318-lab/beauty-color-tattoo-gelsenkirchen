@@ -109,3 +109,12 @@ a{color:var(--gold-lt);text-decoration:none}
 .ad-hello{font-size:.78rem;color:#b9aeb4;letter-spacing:.02em;white-space:nowrap}
 .ad-heart{color:#c99f56}
 @media (max-width:560px){.ad-hello{display:none}}
+
+/* Shop-Einstellungen */
+.ad-sub{margin:1.6rem 0 .8rem;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#c99f56}
+.ad-sub:first-child{margin-top:0}
+.ad-hint{font-size:.82rem;line-height:1.6;color:#b9aeb4;margin:0 0 1.2rem}
+.ad-hint--last{margin:1.4rem 0 0;padding-top:1rem;border-top:1px solid rgba(236,227,211,.08)}
+.ad-state{display:block;margin-top:.35rem;font-size:.72rem;color:#8b8189}
+.ad-state--on{color:#9fd6a8}
+.ad-field select{background:#0d0b10;border:1px solid rgba(236,227,211,.14);border-radius:8px;color:#ece3d3;padding:.7em .8em;font:inherit}

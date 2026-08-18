@@ -23,6 +23,7 @@
 <nav class="ad-tabs">
   <button type="button" class="ad-tab on" data-tab="news">News</button>
   <button type="button" class="ad-tab" data-tab="orders">Bestellungen &amp; Gutscheine</button>
+  <button type="button" class="ad-tab" data-tab="settings">Shop-Einstellungen</button>
 </nav>
 
 <main class="ad-wrap" id="tab-news">
@@ -85,6 +86,73 @@
     <div id="ordersList" class="ad-orders-list" aria-live="polite"></div>
     <p id="ordersEmpty" class="ad-empty" hidden>Noch keine Bestellungen.</p>
     <p id="ordersMsg" class="ad-msg"></p>
+  </div>
+</section>
+
+<section class="ad-orders" id="tab-settings" hidden>
+  <div class="ad-panel">
+    <div class="ad-panel-head">
+      <h2>Shop-Einstellungen</h2>
+      <button id="setTest" class="ad-btn" type="button">Verbindung testen</button>
+    </div>
+
+    <p class="ad-hint">Hier trägst Du die Zugangsdaten für die Bezahlung und den E-Mail-Versand
+      ein. Sie werden <strong>verschlüsselt auf dem Server</strong> gespeichert und nie wieder
+      angezeigt — nur die letzten vier Zeichen zur Kontrolle. Leer lassen heißt: unverändert.</p>
+
+    <form id="setForm" autocomplete="off">
+      <h3 class="ad-sub">PayPal</h3>
+
+      <label class="ad-field">
+        <span>PayPal Client ID</span>
+        <input id="s-PAYPAL_CLIENT_ID" type="text" autocomplete="off" spellcheck="false">
+        <small class="ad-state" id="st-PAYPAL_CLIENT_ID"></small>
+      </label>
+
+      <label class="ad-field">
+        <span>PayPal Secret</span>
+        <input id="s-PAYPAL_SECRET" type="password" autocomplete="new-password" spellcheck="false">
+        <small class="ad-state" id="st-PAYPAL_SECRET"></small>
+      </label>
+
+      <label class="ad-field">
+        <span>PayPal Webhook ID</span>
+        <input id="s-PAYPAL_WEBHOOK_ID" type="password" autocomplete="new-password" spellcheck="false">
+        <small class="ad-state" id="st-PAYPAL_WEBHOOK_ID"></small>
+      </label>
+
+      <label class="ad-field">
+        <span>PayPal Umgebung</span>
+        <select id="s-PAYPAL_ENV">
+          <option value="sandbox">Sandbox (Testbetrieb)</option>
+          <option value="live">Live (echtes Geld)</option>
+        </select>
+        <small class="ad-state" id="st-PAYPAL_ENV"></small>
+      </label>
+
+      <h3 class="ad-sub">E-Mail-Versand (optional)</h3>
+
+      <label class="ad-field">
+        <span>Resend API Key</span>
+        <input id="s-RESEND_API_KEY" type="password" autocomplete="new-password" spellcheck="false" placeholder="re_…">
+        <small class="ad-state" id="st-RESEND_API_KEY"></small>
+      </label>
+
+      <label class="ad-field">
+        <span>Absender-E-Mail</span>
+        <input id="s-MAIL_FROM" type="email" autocomplete="off" placeholder="shop@beautyandcolor-gelsenkirchen.de">
+        <small class="ad-state" id="st-MAIL_FROM"></small>
+      </label>
+
+      <div class="ad-actions">
+        <button type="submit" id="setSave" class="ad-btn ad-btn--gold">Speichern</button>
+      </div>
+      <p id="setMsg" class="ad-msg" role="status"></p>
+    </form>
+
+    <p class="ad-hint ad-hint--last">Ohne PayPal-Daten bleibt der Shop sichtbar und zeigt statt der
+      Bezahlung den WhatsApp-Hinweis. Ohne Resend funktioniert der Kauf ebenfalls — der Gutschein
+      erscheint dann direkt auf der Bestätigungsseite.</p>
   </div>
 </section>
 

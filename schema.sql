@@ -57,3 +57,13 @@ CREATE TABLE IF NOT EXISTS images (
   size         INTEGER NOT NULL,
   created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ========== SHOP-EINSTELLUNGEN (im Admin pflegbar) ==========
+-- PayPal- und Resend-Zugangsdaten. Geheime Werte stehen hier NICHT im Klartext, sondern
+-- AES-GCM-verschluesselt (Schluessel: Pages-Secret SETTINGS_KEY, ersatzweise ADMIN_PASSWORD).
+CREATE TABLE IF NOT EXISTS settings (
+  key        TEXT    PRIMARY KEY,
+  value      TEXT    NOT NULL,
+  is_secret  INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);

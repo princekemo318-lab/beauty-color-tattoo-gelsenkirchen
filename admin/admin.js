@@ -161,8 +161,8 @@
 
   /* ---------- tabs ---------- */
   var tabs = document.querySelectorAll(".ad-tab");
-  var panels = { news: $("tab-news"), orders: $("tab-orders") };
-  var ordersLoaded = false;
+  var panels = { news: $("tab-news"), orders: $("tab-orders"), settings: $("tab-settings") };
+  var ordersLoaded = false, settingsLoaded = false;
   tabs.forEach(function (t) {
     t.addEventListener("click", function () {
       tabs.forEach(function (x) { x.classList.remove("on"); });
@@ -170,6 +170,7 @@
       var name = t.getAttribute("data-tab");
       Object.keys(panels).forEach(function (k) { if (panels[k]) panels[k].hidden = (k !== name); });
       if (name === "orders" && !ordersLoaded) { ordersLoaded = true; loadOrders(); }
+      if (name === "settings" && !settingsLoaded) { settingsLoaded = true; loadSettings(); }
     });
   });
 
@@ -229,6 +230,84 @@
   function euro(n) { return (Math.round(n * 100) / 100).toFixed(2).replace(".", ",") + " €"; }
   function vStatus(s) { return ({ active: "Gültig", redeemed: "Eingelöst", cancelled: "Storniert", expired: "Abgelaufen" })[s] || s; }
   function fmtDT(iso) { try { return new Date(iso).toLocaleString("de-DE"); } catch (e) { return ""; } }
+
+  /* ---------- Shop-Einstellungen ---------- */
+  var SET_KEYS = ["PAYPAL_CLIENT_ID", "PAYPAL_SECRET", "PAYPAL_WEBHOOK_ID", "PAYPAL_ENV",
+                  "RESEND_API_KEY", "MAIL_FROM"];
+  var setForm = $("setForm"), setMsg = $("setMsg");
+
+  function setSetMsg(text, kind) {
+    if (!setMsg) return;
+    setMsg.textContent = text || "";
+    setMsg.className = "ad-msg" + (kind ? " " + kind : "");
+  }
+
+  function loadSettings() {
+    api("/api/admin/settings").then(function (data) {
+      var s = (data && data.settings) || {};
+      SET_KEYS.forEach(function (k) {
+        var state = $("st-" + k), info = s[k] || {};
+        if (k === "PAYPAL_ENV") {
+          var sel = $("s-" + k);
+          // Nur bekannte Werte übernehmen, sonst bleibt die sichere Vorauswahl stehen.
+          if (sel && (info.preview === "live" || info.preview === "sandbox")) sel.value = info.preview;
+        } else if (k === "MAIL_FROM") {
+          var inp = $("s-" + k);
+          if (inp && info.preview) inp.value = info.preview;
+        }
+        if (!state) return;
+        if (info.set) {
+          state.textContent = "gespeichert: " + info.preview +
+            (info.source === "env" ? " (aus der Serverkonfiguration)" : "");
+          state.className = "ad-state ad-state--on";
+        } else {
+          state.textContent = "noch nicht gesetzt";
+          state.className = "ad-state";
+        }
+      });
+    }).catch(function (e) { setSetMsg(e.message, "err"); });
+  }
+
+  if (setForm) {
+    setForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var payload = {};
+      SET_KEYS.forEach(function (k) {
+        var el = $("s-" + k);
+        if (!el) return;
+        var val = (el.value || "").trim();
+        // Leere Felder bleiben unangetastet — außer bei den beiden Auswahl-/Klartextfeldern.
+        if (val || k === "PAYPAL_ENV") payload[k] = val;
+      });
+      $("setSave").disabled = true;
+      setSetMsg("Speichern …");
+      api("/api/admin/settings", {
+        method: "PUT", headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function () {
+        // Geheime Eingaben sofort aus dem Formular entfernen.
+        ["PAYPAL_SECRET", "PAYPAL_WEBHOOK_ID", "RESEND_API_KEY"].forEach(function (k) {
+          var el = $("s-" + k); if (el) el.value = "";
+        });
+        setSetMsg("Gespeichert ✓", "ok");
+        loadSettings();
+      }).catch(function (err) { setSetMsg(err.message, "err"); })
+        .then(function () { $("setSave").disabled = false; });
+    });
+  }
+
+  if ($("setTest")) {
+    $("setTest").addEventListener("click", function () {
+      $("setTest").disabled = true;
+      setSetMsg("Teste Verbindung …");
+      api("/api/admin/settings", { method: "POST" }).then(function (r) {
+        var pp = r.paypal || {}, rs = r.resend || {};
+        setSetMsg("PayPal: " + (pp.msg || "—") + "  ·  Resend: " + (rs.msg || "—"),
+                  pp.ok ? "ok" : "err");
+      }).catch(function (e) { setSetMsg(e.message, "err"); })
+        .then(function () { $("setTest").disabled = false; });
+    });
+  }
 
   /* ---------- Session / Abmelden ---------- */
   var logoutBtn = $("logoutBtn");

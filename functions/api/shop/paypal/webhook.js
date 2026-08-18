@@ -3,13 +3,15 @@
 import { verifyWebhook } from "../../../_shared/paypal.js";
 import { markPaidAndIssue } from "../../../_shared/fulfil.js";
 import { sendVoucherEmail } from "../../../_shared/email.js";
+import { resolvedEnv } from "../../../_shared/settings.js";
 
 export async function onRequestPost({ request, env }) {
   const raw = await request.text();
+  const cfg = await resolvedEnv(env);   // Admin-Einstellungen haben Vorrang
 
   // Never trust the event without verifying its signature with PayPal.
   let valid = false;
-  try { valid = await verifyWebhook(env, request.headers, raw); } catch { valid = false; }
+  try { valid = await verifyWebhook(cfg, request.headers, raw); } catch { valid = false; }
   if (!valid) return new Response("invalid signature", { status: 401 });
 
   let event;
@@ -37,7 +39,7 @@ export async function onRequestPost({ request, env }) {
   if (!alreadyIssued) {
     try {
       const origin = new URL(request.url).origin;
-      await sendVoucherEmail(env, { to: row.customer_email, name: row.customer_name, order: row, vouchers, origin });
+      await sendVoucherEmail(cfg, { to: row.customer_email, name: row.customer_name, order: row, vouchers, origin });
     } catch { /* ignore */ }
   }
   return new Response("ok", { status: 200 });

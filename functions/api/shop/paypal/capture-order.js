@@ -3,9 +3,12 @@ import { json } from "../../../_shared/auth.js";
 import { isConfigured, captureOrder, getOrder } from "../../../_shared/paypal.js";
 import { markPaidAndIssue, loadVouchers } from "../../../_shared/fulfil.js";
 import { sendVoucherEmail, mailProvider } from "../../../_shared/email.js";
+import { resolvedEnv } from "../../../_shared/settings.js";
 
 export async function onRequestPost({ request, env }) {
-  if (!env.DB || !isConfigured(env)) return json({ error: "Shop nicht konfiguriert" }, 503);
+  if (!env.DB) return json({ error: "Shop nicht konfiguriert" }, 503);
+  const cfg = await resolvedEnv(env);   // Admin-Einstellungen haben Vorrang
+  if (!isConfigured(cfg)) return json({ error: "Shop nicht konfiguriert" }, 503);
 
   let data;
   try { data = await request.json(); } catch { return json({ error: "Ungültige Anfrage" }, 400); }
@@ -18,11 +21,11 @@ export async function onRequestPost({ request, env }) {
   // Already fulfilled? Return existing vouchers (idempotent, e.g. double-click or webhook first).
   if (row.status === "paid") {
     const vouchers = await loadVouchers(env, row.id);
-    return json({ ok: true, vouchers: pub(vouchers), voucherUrl: url(vouchers), emailed: !!mailProvider(env) });
+    return json({ ok: true, vouchers: pub(vouchers), voucherUrl: url(vouchers), emailed: !!mailProvider(cfg) });
   }
 
   // Capture (or detect an already-completed order).
-  const cap = await captureOrder(env, ppId);
+  const cap = await captureOrder(cfg, ppId);
   let completed = cap.ok && cap.data && cap.data.status === "COMPLETED";
 
   if (!completed) {
@@ -30,7 +33,7 @@ export async function onRequestPost({ request, env }) {
       cap.data && Array.isArray(cap.data.details) &&
       cap.data.details.some((d) => d.issue === "ORDER_ALREADY_CAPTURED");
     if (alreadyCaptured) {
-      const chk = await getOrder(env, ppId);
+      const chk = await getOrder(cfg, ppId);
       completed = chk.ok && chk.data && chk.data.status === "COMPLETED";
     }
   }
@@ -51,14 +54,14 @@ export async function onRequestPost({ request, env }) {
     // Best-effort E-Mail — darf die bereits erfolgte Zahlung nie kippen.
     try {
       const origin = new URL(request.url).origin;
-      const mail = await sendVoucherEmail(env, {
+      const mail = await sendVoucherEmail(cfg, {
         to: row.customer_email, name: row.customer_name,
         order: row, vouchers, origin,
       });
       emailed = !!(mail && mail.sent);
     } catch { /* egal */ }
   } else {
-    emailed = !!mailProvider(env);
+    emailed = !!mailProvider(cfg);
   }
 
   return json({ ok: true, vouchers: pub(vouchers), voucherUrl: url(vouchers), emailed }, 200);

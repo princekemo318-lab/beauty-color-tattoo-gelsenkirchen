@@ -2,10 +2,12 @@
 import { json } from "../../../_shared/auth.js";
 import { computeOrder, validEmail } from "../../../_shared/shop.js";
 import { isConfigured, createOrder } from "../../../_shared/paypal.js";
+import { resolvedEnv } from "../../../_shared/settings.js";
 
 export async function onRequestPost({ request, env }) {
   if (!env.DB) return json({ error: "Shop nicht konfiguriert" }, 503);
-  if (!isConfigured(env)) return json({ error: "Zahlung noch nicht eingerichtet" }, 503);
+  const cfg = await resolvedEnv(env);   // Admin-Einstellungen haben Vorrang vor Umgebungsvariablen
+  if (!isConfigured(cfg)) return json({ error: "Zahlung noch nicht eingerichtet" }, 503);
 
   let data;
   try { data = await request.json(); } catch { return json({ error: "Ungültige Anfrage" }, 400); }
@@ -30,7 +32,7 @@ export async function onRequestPost({ request, env }) {
   // 2) Create the PayPal order for exactly this amount.
   let pp;
   try {
-    pp = await createOrder(env, order, {
+    pp = await createOrder(cfg, order, {
       description: "Beauty & Color Gutschein",
       customId: String(internalId),
     });
