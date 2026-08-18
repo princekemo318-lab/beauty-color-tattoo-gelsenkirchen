@@ -1,92 +1,116 @@
-// Server-side Cloudflare Access verification (RS256 JWT).
-// Files/dirs starting with "_" are NOT routed by Pages Functions — safe for shared code.
+// Eigener Admin-Login — KEIN Cloudflare Access, kein OAuth, kein Zero Trust.
+//
+// Prinzip: Benutzername + Passwort werden serverseitig gegen die Pages-Variablen
+// ADMIN_USER (öffentlich) und ADMIN_PASSWORD (Secret) geprüft. Danach bekommt der
+// Browser ein signiertes Session-Cookie (HMAC-SHA256). Das Cookie enthält KEIN
+// Passwort — nur Ablaufzeit + Zufallswert + Signatur. Ohne den Secret-Schlüssel
+// lässt es sich nicht fälschen.
+//
+// Das Passwort steht ausschließlich serverseitig (Secret) — nie im Frontend,
+// nie im Repository.
+//
+// Dateien/Ordner mit "_" werden von Pages Functions NICHT geroutet → sicher für Shared-Code.
 
-let JWKS_CACHE = { url: null, keys: null, exp: 0 };
+const COOKIE_NAME = "bct_session";
+const MAX_AGE = 60 * 60 * 24 * 7; // 7 Tage eingeloggt bleiben
 
-function b64urlToBytes(s) {
-  s = s.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = s.length % 4;
-  if (pad) s += "=".repeat(4 - pad);
-  const bin = atob(s);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes;
+const enc = (s) => new TextEncoder().encode(s);
+
+function bytesToB64url(bytes) {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
-function b64urlToJson(s) {
-  return JSON.parse(new TextDecoder().decode(b64urlToBytes(s)));
+
+/** Konstante Laufzeit — verhindert, dass sich das Passwort zeichenweise erraten lässt. */
+function timingSafeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const A = enc(a), B = enc(b);
+  let diff = A.length ^ B.length;
+  const n = Math.max(A.length, B.length);
+  for (let i = 0; i < n; i++) diff |= (A[i] || 0) ^ (B[i] || 0);
+  return diff === 0;
 }
 
-async function getKeys(teamDomain) {
-  const host = teamDomain.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const url = `https://${host}/cdn-cgi/access/certs`;
-  const now = Date.now();
-  if (JWKS_CACHE.url === url && JWKS_CACHE.keys && JWKS_CACHE.exp > now) return JWKS_CACHE.keys;
-  const res = await fetch(url, { cf: { cacheTtl: 3600 } });
-  if (!res.ok) throw new Error("JWKS fetch failed");
-  const data = await res.json();
-  JWKS_CACHE = { url, keys: data.keys || [], exp: now + 3600_000 };
-  return JWKS_CACHE.keys;
+/** Signaturschlüssel. Standard: aus dem Admin-Passwort abgeleitet — dann genügt EIN Secret.
+ *  Passwortwechsel macht damit automatisch alle alten Sessions ungültig. */
+async function signingKey(env) {
+  const secret = env.SESSION_SECRET || env.ADMIN_PASSWORD;
+  if (!secret) return null;
+  return crypto.subtle.importKey(
+    "raw", enc("bct-admin-session-v1:" + secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+}
+
+async function sign(env, data) {
+  const key = await signingKey(env);
+  if (!key) return null;
+  return bytesToB64url(new Uint8Array(await crypto.subtle.sign("HMAC", key, enc(data))));
+}
+
+export function adminUser(env) {
+  return String(env.ADMIN_USER || "nicole").trim();
+}
+
+/** true, sobald ADMIN_PASSWORD gesetzt ist (sonst ist der Login gar nicht scharf). */
+export function loginConfigured(env) {
+  return typeof env.ADMIN_PASSWORD === "string" && env.ADMIN_PASSWORD.length >= 8;
+}
+
+export function checkPassword(env, user, password) {
+  if (!loginConfigured(env)) return false;
+  const okUser = timingSafeEqual(String(user || "").trim().toLowerCase(), adminUser(env).toLowerCase());
+  const okPass = timingSafeEqual(String(password || ""), String(env.ADMIN_PASSWORD));
+  return okUser && okPass; // beide immer auswerten, kein Kurzschluss
+}
+
+function cookieHeader(value, maxAge, url) {
+  const secure = !url || url.protocol === "https:"; // lokal (http) sonst unsetzbar
+  return `${COOKIE_NAME}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}` +
+         (secure ? "; Secure" : "");
+}
+
+export async function createSessionCookie(env, url) {
+  const exp = Math.floor(Date.now() / 1000) + MAX_AGE;
+  const nonce = bytesToB64url(crypto.getRandomValues(new Uint8Array(12)));
+  const data = `v1.${exp}.${nonce}`;
+  const sig = await sign(env, data);
+  if (!sig) return null;
+  return cookieHeader(`${data}.${sig}`, MAX_AGE, url);
+}
+
+export function clearSessionCookie(url) {
+  return cookieHeader("", 0, url);
 }
 
 /**
- * Returns { email } when the request carries a valid Cloudflare Access JWT for
- * this application, otherwise null. NEVER trust the presence of /admin alone —
- * every write endpoint calls this.
+ * Liefert { user }, wenn die Anfrage ein gültiges, nicht abgelaufenes Session-Cookie
+ * trägt — sonst null. JEDER schreibende Endpunkt ruft das auf; es reicht ausdrücklich
+ * NICHT, nur die /admin-Seite abzusichern.
  */
 export async function getIdentity(request, env) {
-  // Local-dev bypass. Set ACCESS_DEV_EMAIL only in `wrangler pages dev`, never in prod.
-  if (env.ACCESS_DEV_EMAIL) return { email: env.ACCESS_DEV_EMAIL, dev: true };
-
-  if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return null;
+  if (!loginConfigured(env)) return null;
 
   const cookie = request.headers.get("Cookie") || "";
-  const token =
-    request.headers.get("Cf-Access-Jwt-Assertion") ||
-    (cookie.match(/CF_Authorization=([^;]+)/) || [])[1];
-  if (!token) return null;
+  const m = cookie.match(/(?:^|;\s*)bct_session=([^;]+)/);
+  if (!m) return null;
 
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
+  const parts = m[1].split(".");
+  if (parts.length !== 4 || parts[0] !== "v1") return null;
+  const [v, exp, nonce, sig] = parts;
 
-  let header, payload;
-  try {
-    header = b64urlToJson(parts[0]);
-    payload = b64urlToJson(parts[1]);
-  } catch {
-    return null;
-  }
-  if (header.alg !== "RS256") return null;
+  const expected = await sign(env, `${v}.${exp}.${nonce}`);
+  if (!expected || !timingSafeEqual(sig, expected)) return null;
 
-  let keys;
-  try { keys = await getKeys(env.ACCESS_TEAM_DOMAIN); } catch { return null; }
-  const jwk = keys.find((k) => k.kid === header.kid);
-  if (!jwk) return null;
+  const expNum = parseInt(exp, 10);
+  if (!Number.isFinite(expNum) || expNum <= Math.floor(Date.now() / 1000)) return null;
 
-  let ok = false;
-  try {
-    const key = await crypto.subtle.importKey(
-      "jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]
-    );
-    const data = new TextEncoder().encode(parts[0] + "." + parts[1]);
-    ok = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, b64urlToBytes(parts[2]), data);
-  } catch { return null; }
-  if (!ok) return null;
-
-  const now = Math.floor(Date.now() / 1000);
-  if (payload.exp && payload.exp < now) return null;
-  if (payload.nbf && payload.nbf > now + 60) return null;
-  const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-  if (!aud.includes(env.ACCESS_AUD)) return null;
-
-  if (env.OWNER_EMAIL) {
-    const allowed = env.OWNER_EMAIL.split(",").map((s) => s.trim().toLowerCase());
-    if (!allowed.includes((payload.email || "").toLowerCase())) return null;
-  }
-  return { email: payload.email };
+  return { user: adminUser(env) };
 }
 
 export function unauthorized() {
-  return json({ error: "Unauthorized" }, 401);
+  return json({ error: "Nicht angemeldet" }, 401);
 }
 
 export function json(data, status = 200, extraHeaders = {}) {

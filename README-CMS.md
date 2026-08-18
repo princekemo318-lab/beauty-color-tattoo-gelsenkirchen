@@ -21,12 +21,15 @@ News-Sektion einfach unsichtbar — die Seite funktioniert immer.
 | API | Cloudflare **Pages Functions** (`/functions`) |
 | News-Daten | Cloudflare **D1** (Binding `DB`) |
 | News-Bilder | Cloudflare **R2** (Binding `NEWS_BUCKET`, privat) |
-| Admin-Schutz | Cloudflare **Access** (Zero Trust) für `/admin` |
-| Schreib-Auth | **Server-seitige** Access-JWT-Prüfung in jeder Write-Function |
+| Admin-Schutz | **Eigener Login** (Benutzername + Passwort) + signiertes Session-Cookie |
+| Schreib-Auth | **Server-seitige** Session-Prüfung in jeder Write-Function |
 
 ```
 functions/
-  _shared/auth.js        # Access-JWT verifizieren (RS256) + JSON-Helper
+  _shared/auth.js        # Passwortpruefung + signierte Session (HMAC-SHA256) + JSON-Helper
+  _shared/loginpage.js   # gebrandete Login-Seite
+  admin/_middleware.js   # /admin serverseitig sperren, sonst Login-Seite ausliefern
+  api/admin/login.js     # POST Login  ·  logout.js  ·  session.js
   _shared/news.js        # Validierung + Mapper
   api/news.js            # GET (öffentlich: published) · GET ?status=all (Admin) · POST
   api/news/[id].js       # PUT · DELETE  (geschützt)
@@ -36,7 +39,7 @@ admin/                   # /admin — einfacher Editor (index.html, admin.css, a
 assets/js/news.js        # öffentliche News-Sektion (lazy, non-blocking)
 shop/                    # /shop — Gutscheine & Seminare mit PayPal
 schema.sql               # D1-Tabelle
-wrangler.toml            # Pages + D1/R2 Bindings + Access-Variablen
+wrangler.toml            # Pages + D1/R2 Bindings + ADMIN_USER
 ```
 
 ---
@@ -66,26 +69,42 @@ npx wrangler r2 bucket create bct-news-images
 R2 wird **nur für News-Bilder** gebraucht: News mit Text funktionieren auch ohne, der
 Bild-Upload gibt bis dahin einen Fehler zurück. Der **Shop braucht R2 nicht**.
 
-### c) Cloudflare Access für `/admin`
-Zero Trust Dashboard → **Access → Applications → Add an application → Self-hosted**:
-- **Application domain:** `deine-domain` **Path:** `admin` (schützt `/admin*`).
-- **Policy:** Action *Allow*, Include → **Emails** → E-Mail der Inhaberin (Nicole).
-- Login-Methode: **One-time PIN** (E-Mail-Code) reicht — kein Passwort nötig.
-- Nach dem Anlegen in der App-Übersicht den **Application Audience (AUD) Tag** kopieren.
+### c) Admin-Login (KEIN Cloudflare Access, kein Zero Trust)
+Der Login ist selbst gebaut und braucht im Dashboard nur **ein Secret**:
 
-Team-Domain steht unter Zero Trust → **Settings → Custom Pages / General** als
-`deinteam.cloudflareaccess.com`.
+```bash
+npx wrangler pages secret put ADMIN_PASSWORD --project-name beauty-color-tattoo-gelsenkirchen
+```
+oder Dashboard → **Workers & Pages → beauty-color-tattoo-gelsenkirchen → Settings →
+Variables and Secrets → Add → Type: Secret**, Name `ADMIN_PASSWORD`.
+
+Der Benutzername steht als normale Variable `ADMIN_USER` in `wrangler.toml` (kein Geheimnis).
+Optional: `SESSION_SECRET` als zweites Secret — ohne wird der Signaturschlüssel aus
+`ADMIN_PASSWORD` abgeleitet (Passwortwechsel wirft dann alle Sessions raus, was gewollt ist).
+
+So funktioniert es:
+1. `/admin` prüft **serverseitig** die Session (`functions/admin/_middleware.js`). Ohne gültige
+   Session wird das Admin-UI **gar nicht ausgeliefert**, sondern die Login-Seite.
+2. `POST /api/admin/login` vergleicht Benutzer + Passwort in **konstanter Laufzeit** gegen
+   `ADMIN_USER`/`ADMIN_PASSWORD` und setzt danach das Cookie `bct_session`
+   (**HttpOnly, Secure, SameSite=Strict**, 7 Tage).
+3. Das Cookie enthält **kein Passwort** — nur Ablaufzeit, Zufallswert und eine HMAC-SHA256-
+   Signatur. Ohne den Schlüssel lässt es sich nicht fälschen.
+4. **Jeder** Admin-Endpunkt (News schreiben/ändern/löschen, Upload, Bestellungen, Gutscheine)
+   prüft die Session selbst — der Seitenschutz allein wäre nicht genug.
+5. `POST /api/admin/logout` löscht das Cookie (Button „Abmelden" oben rechts).
+
+Passwort ändern: einfach das Secret neu setzen — sonst nichts.
 
 ### d) Variablen & Bindings setzen
-In `wrangler.toml` eintragen (kein Secret, darf ins Repo):
+In `wrangler.toml` steht bereits alles Nicht-Geheime:
 ```toml
-ACCESS_TEAM_DOMAIN = "deinteam.cloudflareaccess.com"
-ACCESS_AUD         = "<AUD-Tag der Access-App>"
-# OWNER_EMAIL      = "nicole@example.com"   # optional, empfohlen
+[vars]
+ADMIN_USER = "nicole"
 ```
-Bindings `DB` (D1) und `NEWS_BUCKET` (R2) sind bereits in `wrangler.toml`. Alternativ/zusätzlich
-im **Pages-Dashboard → Settings → Functions → Bindings** setzen (D1 = `DB`, R2 = `NEWS_BUCKET`)
-sowie die drei Variablen als **Environment variables**.
+Bindings `DB` (D1) und `NEWS_BUCKET` (R2) ebenfalls. Alternativ/zusätzlich im
+**Pages-Dashboard → Settings → Functions → Bindings** (D1 = `DB`, R2 = `NEWS_BUCKET`).
+**Geheim bleibt nur `ADMIN_PASSWORD`** (plus optional die PayPal-Secrets, siehe README-SHOP.md).
 
 ### e) Deployen (jetzt mit Functions!)
 Wichtig: Sobald Functions genutzt werden, muss **mit-deployt** werden — nicht mehr nur der
@@ -106,17 +125,20 @@ npx wrangler d1 execute bct-news --local --file=./schema.sql
 ```
 Dev-Server mit D1 + R2 + Admin-Bypass (nur lokal!):
 ```bash
-npx wrangler pages dev . --d1 DB --r2 NEWS_BUCKET --binding ACCESS_DEV_EMAIL=dev@local
+npx wrangler pages dev . --port 8801 --binding ADMIN_USER=nicole ADMIN_PASSWORD=test-passwort
 ```
-- `ACCESS_DEV_EMAIL` ersetzt lokal die Access-Anmeldung (in Produktion **niemals** setzen).
-- Öffnen: `http://localhost:8788/` (Seite) und `http://localhost:8788/admin` (Editor).
+- Ohne `--d1/--r2`-Flags nutzt der Dev-Server die Bindings aus `wrangler.toml` und damit
+  **dieselbe** lokale D1 wie `wrangler d1 execute --local` (sonst legt er eine zweite an).
+- Hängt der Dev-Server einmal: Prozesse beenden, `.wrangler/tmp` + `.wrangler/state` löschen,
+  Schema lokal neu einspielen, neu starten.
+- Öffnen: `http://localhost:8801/` (Seite) und `http://localhost:8801/admin` (Login → Editor).
 
 ---
 
 ## 4) So benutzt es die Kundin (bewusst simpel)
 
-1. `deine-domain/admin` öffnen → Cloudflare fragt die E-Mail ab → 6-stelligen Code aus der
-   Mail eingeben. **Fertig eingeloggt.**
+1. `deine-domain/admin` öffnen → **Benutzername + Passwort** eingeben → **Einloggen**.
+   Man bleibt 7 Tage angemeldet; oben rechts gibt es **Abmelden**.
 2. **+ Neue News** → Titel + Text schreiben, optional ein Bild wählen (wird automatisch
    verkleinert), **Veröffentlicht** anhaken → **Veröffentlichen**.
 3. Die News erscheint **sofort** auf der Startseite im Bereich „Aktuelles".
@@ -144,8 +166,10 @@ Inhaberin zu prüfen (siehe README-SHOP.md → „Rechtliches"). MwSt-/Rechnungs
 
 ## 6) Security-Checkliste
 
-- [x] Admin-UI durch **Cloudflare Access** geschützt (`/admin`).
-- [x] **Server-seitige** Auth in jeder Write-Function (Access-JWT: Signatur + `aud` + `exp` + optional `OWNER_EMAIL`) — verlässt sich **nicht** allein auf den /admin-Schutz.
+- [x] Admin-UI **serverseitig** gesperrt (`functions/admin/_middleware.js`) — ohne Session wird es nicht ausgeliefert.
+- [x] **Server-seitige** Session-Prüfung in **jeder** Admin-Function — verlässt sich **nicht** allein auf den /admin-Schutz.
+- [x] Passwort nur als **Secret** (nie im Frontend, nie im Repo); Vergleich in **konstanter Laufzeit**; Fehlversuche werden **verzögert**.
+- [x] Session-Cookie **HttpOnly + Secure + SameSite=Strict**, HMAC-signiert, mit Ablaufzeit — Manipulation an Signatur oder Laufzeit führt zu 401.
 - [x] `GET /api/news` öffentlich, liefert **nur veröffentlichte** News, keine Admin-Felder.
 - [x] D1 nur mit **Prepared Statements / Bindings** — kein String-Zusammenbau.
 - [x] R2-Keys werden **server-seitig generiert** (`news/<uuid>.<ext>`), Nutzer-Dateinamen werden nie verwendet; Key-Format wird validiert.
@@ -154,7 +178,7 @@ Inhaberin zu prüfen (siehe README-SHOP.md → „Rechtliches"). MwSt-/Rechnungs
 - [x] Ausgabe im Frontend ausschließlich per **`textContent`** (kein `innerHTML`) → kein XSS.
 - [x] Keine Secrets im Frontend / im Repo (nur öffentliche IDs).
 - [x] Kein offenes CORS (alles same-origin).
-- [ ] Optional: zusätzliches Rate-Limiting für `/api/upload` über eine Cloudflare **WAF-Rate-Limiting-Rule** (empfohlen, da hinter Access ohnehin nur die Inhaberin schreibt).
+- [ ] Optional: zusätzliches Rate-Limiting für `/api/upload` über eine Cloudflare **WAF-Rate-Limiting-Rule** (empfohlen; ebenso eine Rate-Limiting-Rule auf `/api/admin/login` gegen Durchprobieren).
 
 ## 7) Performance-Checkliste
 

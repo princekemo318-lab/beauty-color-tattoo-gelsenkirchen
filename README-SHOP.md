@@ -66,11 +66,11 @@ Die D1-Tabellen `orders` + `vouchers` sind bereits in `schema.sql` — einmal au
 - [ ] Webhook-Simulator (PayPal Dashboard) → Order wird auch ohne Browser abgeschlossen
 - [ ] API-Manipulation: Betrag im Request wird **ignoriert** (Server rechnet aus dem Katalog)
 - [ ] Doppelter Capture / Doppel-Klick → nur **ein** Gutschein (Idempotenz)
-- [ ] `/admin` → Tab „Bestellungen & Gutscheine": Bestellung, Code, Status; „Eingelöst"/„Stornieren"
+- [ ] `/admin` → einloggen → Tab „Bestellungen & Gutscheine": Bestellung, Code, Status; „Eingelöst"/„Stornieren"
 - [ ] Mobil: Grid einspaltig, Buttons touch-freundlich, kein Layout-Shift
 
 ## Admin
-`/admin` (Cloudflare Access) → Tab **Bestellungen & Gutscheine**: alle Bestellungen mit
+`/admin` (eigener Login, siehe README-CMS.md) → Tab **Bestellungen & Gutscheine**: alle Bestellungen mit
 Kunde/E-Mail, Betrag, MwSt, Status, Datum und Gutschein-Codes; Codes lassen sich als
 **eingelöst** markieren, **stornieren** oder **reaktivieren**.
 
@@ -83,7 +83,7 @@ Kunde/E-Mail, Betrag, MwSt, Status, Datum und Gutschein-Codes; Codes lassen sich
 - [x] Voucher-Codes **serverseitig**, unguessbar (`crypto.getRandomValues`, ohne 0/O/1/I).
 - [x] D1 nur mit **Prepared Statements**.
 - [x] Keine sensiblen Zahlungsdaten gespeichert (nur PayPal-Order-ID + Beträge/Status).
-- [x] Admin/Schreiben durch Cloudflare Access + serverseitige JWT-Prüfung.
+- [x] Admin/Schreiben durch eigenen Login + **serverseitige Session-Prüfung** in jedem Endpunkt.
 - [x] Secrets nur serverseitig (nie im Frontend/Repo).
 
 ## Performance

@@ -1,5 +1,5 @@
-/* Beauty & Color — Admin logic. Talks to the Access-protected API.
-   Cookies (CF_Authorization) are sent same-origin automatically. */
+/* Beauty & Color — Admin-Logik. Spricht mit der session-geschützten API.
+   Das Session-Cookie (bct_session) geht same-origin automatisch mit. */
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
@@ -19,7 +19,7 @@
     opts.credentials = "same-origin";
     opts.headers = Object.assign({ accept: "application/json" }, opts.headers || {});
     return fetch(path, opts).then(function (r) {
-      if (r.status === 401) throw new Error("Nicht angemeldet — bitte über Cloudflare Access einloggen.");
+      if (r.status === 401) { location.replace("/admin/"); throw new Error("Sitzung abgelaufen — bitte neu anmelden."); }
       return r.json().catch(function () { return {}; }).then(function (body) {
         if (!r.ok) throw new Error(body.error || ("Fehler " + r.status));
         return body;
@@ -229,6 +229,26 @@
   function euro(n) { return (Math.round(n * 100) / 100).toFixed(2).replace(".", ",") + " €"; }
   function vStatus(s) { return ({ active: "Gültig", redeemed: "Eingelöst", cancelled: "Storniert", expired: "Abgelaufen" })[s] || s; }
   function fmtDT(iso) { try { return new Date(iso).toLocaleString("de-DE"); } catch (e) { return ""; } }
+
+  /* ---------- Session / Abmelden ---------- */
+  var logoutBtn = $("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      logoutBtn.disabled = true;
+      fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" })
+        .then(function () { location.replace("/admin/"); })
+        .catch(function () { location.replace("/admin/"); });
+    });
+  }
+
+  // Zeigt an, als wer man angemeldet ist — und merkt, wenn die Session abgelaufen ist.
+  fetch("/api/admin/session", { credentials: "same-origin", headers: { accept: "application/json" } })
+    .then(function (r) { if (r.status === 401) { location.replace("/admin/"); return null; } return r.json(); })
+    .then(function (s) {
+      var hello = $("adHello");
+      if (s && s.user && hello) hello.title = "Angemeldet als " + s.user;
+    })
+    .catch(function () {});
 
   loadList();
 })();

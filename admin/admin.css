@@ -103,3 +103,9 @@ a{color:var(--gold-lt);text-decoration:none}
 .ad-vact{margin-left:auto;display:flex;gap:.4rem;flex-wrap:wrap}
 
 @media(max-width:760px){ .ad-wrap{grid-template-columns:1fr} .ad-vact{margin-left:0;width:100%} }
+
+/* Kopfzeile rechts: Begrüßung + Abmelden (eigener Login, kein Cloudflare Access) */
+.ad-top-right{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;justify-content:flex-end}
+.ad-hello{font-size:.78rem;color:#b9aeb4;letter-spacing:.02em;white-space:nowrap}
+.ad-heart{color:#c99f56}
+@media (max-width:560px){.ad-hello{display:none}}

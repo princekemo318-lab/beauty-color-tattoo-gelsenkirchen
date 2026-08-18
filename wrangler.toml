@@ -1,7 +1,7 @@
 # Cloudflare Pages + Functions config for Beauty & Color Tattoo.
 # The static site is unchanged; this only wires up the CMS Functions,
 # D1 (news data) and R2 (news images). No secrets belong in this file
-# (database_id / bucket name / Access AUD are identifiers, not secrets).
+# (database_id / bucket name / ADMIN_USER are identifiers, not secrets).
 
 name = "beauty-color-tattoo-gelsenkirchen"
 pages_build_output_dir = "."
@@ -18,14 +18,16 @@ database_id = "69945e9b-e38e-4a3c-b3c6-f7a73a4d03d2"
 binding = "NEWS_BUCKET"
 bucket_name = "bct-news-images"
 
-# --- Public (non-secret) variables used for Cloudflare Access verification ---
+# --- Admin-Login (eigener Login — KEIN Cloudflare Access / Zero Trust) ---
 [vars]
-# Your Zero Trust team domain, e.g. "beautyandcolor.cloudflareaccess.com"
-ACCESS_TEAM_DOMAIN = "REPLACE_WITH_your-team.cloudflareaccess.com"
-# The Access Application "Application Audience (AUD) Tag"
-ACCESS_AUD = "REPLACE_WITH_YOUR_ACCESS_APPLICATION_AUD"
-# Optional: restrict writes to one or more owner e-mails (comma separated)
-# OWNER_EMAIL = "inhaberin@example.com"
+# Benutzername für /admin (kein Geheimnis).
+ADMIN_USER = "nicole"
+
+# GEHEIM — NICHT hier eintragen, sondern als Pages-Secret setzen:
+#   ADMIN_PASSWORD   Passwort für /admin (Pflicht; ohne das ist der Login nicht scharf)
+#   SESSION_SECRET   optional; wird sonst aus ADMIN_PASSWORD abgeleitet
+# Setzen:  npx wrangler pages secret put ADMIN_PASSWORD --project-name beauty-color-tattoo-gelsenkirchen
+# oder:    Dashboard -> Pages -> Settings -> Variables and Secrets -> Secret
 
 # --- Shop / PayPal (non-secret settings) ---
 PAYPAL_ENV = "sandbox"                 # "sandbox" zum Testen, "live" für echten Verkauf
@@ -37,6 +39,4 @@ PAYPAL_ENV = "sandbox"                 # "sandbox" zum Testen, "live" für echte
 #   PAYPAL_SECRET      (streng geheim)
 #   PAYPAL_WEBHOOK_ID  (aus der PayPal-Webhook-Konfiguration)
 #
-# NOTE: ACCESS_DEV_EMAIL is intentionally NOT set here. It is only used for
-# LOCAL development with `wrangler pages dev` (see README-CMS.md) and must
-# never exist in production.
+# Lokal testen: npx wrangler pages dev . --d1 DB --r2 NEWS_BUCKET --binding ADMIN_PASSWORD=<test>
