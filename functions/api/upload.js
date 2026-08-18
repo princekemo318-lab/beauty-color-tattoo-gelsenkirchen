@@ -1,13 +1,15 @@
 // /api/upload  —  POST an image to R2 (protected). Returns { key, url }.
 import { getIdentity, unauthorized, json } from "../_shared/auth.js";
+import { putImage, storageKind, maxBytes, sniffImageType } from "../_shared/images.js";
 
 const ALLOWED = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-const MAX_BYTES = 4 * 1024 * 1024; // 4 MB (admin resizes client-side first)
+// Obergrenze haengt vom Speicher ab (R2: 4 MB, D1-Fallback: 1,2 MB) — das Admin-UI
+// rechnet Bilder ohnehin vorher auf max. 1600 px / WebP herunter.
 
 export async function onRequestPost({ request, env }) {
   const id = await getIdentity(request, env);
   if (!id) return unauthorized();
-  if (!env.NEWS_BUCKET) return json({ error: "Bild-Upload ist noch nicht aktiv — R2 im Cloudflare-Dashboard freischalten. Text-News funktionieren." }, 503);
+  if (!storageKind(env)) return json({ error: "Kein Bildspeicher konfiguriert" }, 503);
 
   const ct = request.headers.get("content-type") || "";
   if (!ct.includes("multipart/form-data")) return json({ error: "multipart/form-data erwartet" }, 400);
@@ -19,15 +21,27 @@ export async function onRequestPost({ request, env }) {
 
   const ext = ALLOWED[file.type];
   if (!ext) return json({ error: "Nur JPEG, PNG oder WebP erlaubt" }, 415);
-  if (file.size <= 0 || file.size > MAX_BYTES) return json({ error: "Datei zu groß (max. 4 MB)" }, 413);
+  const limit = maxBytes(env);
+  if (file.size <= 0 || file.size > limit) {
+    return json({ error: "Bild zu groß (max. " + Math.round(limit / 1024 / 1024 * 10) / 10 + " MB)" }, 413);
+  }
 
   // Secure, unguessable key — user file name is never used.
   const key = `news/${crypto.randomUUID()}.${ext}`;
   const buf = await file.arrayBuffer();
 
-  await env.NEWS_BUCKET.put(key, buf, {
-    httpMetadata: { contentType: file.type, cacheControl: "public, max-age=31536000, immutable" },
-  });
+  // Der gemeldete Content-Type kommt vom Client — entscheidend sind die echten Bytes.
+  const real = sniffImageType(buf);
+  if (!real || real !== file.type) {
+    return json({ error: "Das ist keine gültige JPEG-, PNG- oder WebP-Datei" }, 415);
+  }
 
-  return json({ key, url: `/img/${key}` }, 201);
+  let where;
+  try {
+    where = await putImage(env, key, file.type, buf);
+  } catch {
+    return json({ error: "Bild konnte nicht gespeichert werden" }, 500);
+  }
+
+  return json({ key, url: `/img/${key}`, storage: where }, 201);
 }

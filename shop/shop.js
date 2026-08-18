@@ -141,6 +141,12 @@
   }
 
   function showSuccess(res) {
+    var lead = $("successLead");
+    if (lead) {
+      lead.textContent = res && res.emailed
+        ? "Deine Zahlung war erfolgreich. Deinen Gutschein findest Du hier und zusätzlich in Deiner E-Mail:"
+        : "Deine Zahlung war erfolgreich. Hier ist Dein Gutschein — bitte speichere oder drucke ihn Dir. Über den Link ist er jederzeit wieder abrufbar:";
+    }
     var ul = $("successVouchers"); ul.textContent = "";
     (res.vouchers || []).forEach(function (v) {
       var li = document.createElement("li");

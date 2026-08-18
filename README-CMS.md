@@ -57,17 +57,26 @@ Angelegt im Konto `ourragency@gmail.com` (Prince, `9a0b633e…`), Region **WEUR*
 `database_id = 69945e9b-e38e-4a3c-b3c6-f7a73a4d03d2` steht in `wrangler.toml`.
 Schema eingespielt: Tabellen `news`, `orders`, `vouchers` + Indizes.
 
-### b) R2-Bucket — ⚠️ OFFEN: R2 muss einmalig aktiviert werden
-`wrangler r2 bucket create bct-news-images` schlägt mit
-`Please enable R2 through the Cloudflare Dashboard [code: 10042]` fehl, solange R2 im Konto
-nicht freigeschaltet ist. Einmalig im Dashboard: **R2 Object Storage → Get started / Enable**
-(Zahlungsmittel hinterlegen; das kostenlose Kontingent reicht für News-Bilder). Danach:
+### b) Bilder — ✅ FERTIG, R2 ist optional
+Der Bild-Upload funktioniert **ohne jede weitere Cloudflare-Einrichtung**:
+
+| Speicher | Wann | Grenze |
+|---|---|---|
+| **D1-Tabelle `images`** | Standard — wenn kein R2-Binding da ist | 1,2 MB pro Bild |
+| **R2** (`NEWS_BUCKET`) | automatisch, sobald das Binding existiert | 4 MB pro Bild |
+
+Das Admin-UI rechnet jedes Bild vorher client-seitig auf max. 1600 px / WebP herunter
+(typisch 60–300 KB), damit bleibt der D1-Weg unkritisch. `/img/*` prüft **beide** Quellen,
+ein späterer Umstieg auf R2 macht also keine alten Bilder unerreichbar.
+
+R2 lässt sich per API **nicht** freischalten (`code: 10042`, einmalige Kontoentscheidung im
+Dashboard). Deshalb bleibt das Binding in `wrangler.toml` auskommentiert — mit aktivem Binding
+auf einen nicht existierenden Bucket **schlägt jedes Deployment fehl**. Wer R2 später will:
+Dashboard → R2 → aktivieren, dann
 ```bash
 npx wrangler r2 bucket create bct-news-images
 ```
-(Bucket **privat lassen** — Bilder werden über `/img/*` ausgeliefert.)
-R2 wird **nur für News-Bilder** gebraucht: News mit Text funktionieren auch ohne, der
-Bild-Upload gibt bis dahin einen Fehler zurück. Der **Shop braucht R2 nicht**.
+und die drei Zeilen in `wrangler.toml` einkommentieren. Nötig ist das nicht.
 
 ### c) Admin-Login (KEIN Cloudflare Access, kein Zero Trust)
 Der Login ist selbst gebaut und braucht im Dashboard nur **ein Secret**:

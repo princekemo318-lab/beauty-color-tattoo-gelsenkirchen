@@ -32,29 +32,64 @@ Der Client kann **nie** Preis, Zahlungsstatus oder Gutscheinwert bestimmen.
 Die D1-Tabellen `orders` + `vouchers` sind bereits in `schema.sql` — einmal ausführen
 (`wrangler d1 execute bct-news --remote --file=./schema.sql`). R2 wird für den Shop **nicht** benötigt.
 
-### PayPal
-1. **developer.paypal.com → Apps & Credentials → LIVE → Create App** → **Client ID** + **Secret** notieren.
-2. **Webhooks → Add Webhook**: URL `https://DEINE-DOMAIN/api/shop/paypal/webhook`,
-   Events: **PAYMENT.CAPTURE.COMPLETED** und **CHECKOUT.ORDER.COMPLETED** → **Webhook ID** notieren.
-3. Secrets in Cloudflare setzen (NICHT ins Repo):
-   ```bash
-   npx wrangler pages secret put PAYPAL_CLIENT_ID   --project-name beauty-color-tattoo-gelsenkirchen
-   npx wrangler pages secret put PAYPAL_SECRET       --project-name beauty-color-tattoo-gelsenkirchen
-   npx wrangler pages secret put PAYPAL_WEBHOOK_ID   --project-name beauty-color-tattoo-gelsenkirchen
-   ```
-   (oder Dashboard → Pages → Settings → Environment variables → **Encrypt**).
-4. `PAYPAL_ENV = "live"` setzen (in `wrangler.toml` bzw. als Variable). Zum Testen `"sandbox"`.
+### PayPal — das Einzige, was am Termin noch fehlt
+Der Code ist vollständig; es fehlen nur die echten Zugangsdaten. Genau **drei Secrets**:
 
-### E-Mail (MailChannels — kein neuer SaaS-Account)
-> Hinweis: Der bisherige GoDaddy-Gutscheinversand läuft in GoDaddys geschlossenem
-> „Online Store"-Backend und ist **technisch nicht übertragbar** (kein API-/Template-Export).
-> Der neue Shop versendet daher selbst — Cloudflare-nativ über MailChannels.
+| Secret | Woher | Wozu |
+|---|---|---|
+| `PAYPAL_CLIENT_ID` | developer.paypal.com → Apps & Credentials → **Live** → App → Client ID | Buttons im Shop + Server-Auth |
+| `PAYPAL_SECRET` | dieselbe App → Secret | Server-Auth (streng geheim) |
+| `PAYPAL_WEBHOOK_ID` | Webhooks → Add Webhook → nach dem Anlegen die **Webhook-ID** | Signaturprüfung der Webhooks |
 
-1. `MAIL_FROM = "shop@beautyandcolor-gelsenkirchen.de"` als Variable setzen (verifizierter Absender).
-2. DNS der Domain: **SPF** `include:relay.mailchannels.net`, **DKIM**, und die
-   **MailChannels-Domain-Lockdown**-TXT `_mailchannels` → `v=mc1 cfid=<dein-pages-subdomain>.pages.dev`.
-3. Falls MailChannels für dein Konto nicht verfügbar ist: der Kunde bekommt die Gutscheinseite
-   trotzdem sofort angezeigt; auf Wunsch stelle ich alternativ auf **Resend** um (dann `RESEND_API_KEY`).
+Setzen (oder Dashboard → Pages → Settings → Variables and Secrets → **Secret**):
+```bash
+npx wrangler pages secret put PAYPAL_CLIENT_ID  --project-name beauty-color-tattoo-gelsenkirchen
+npx wrangler pages secret put PAYPAL_SECRET     --project-name beauty-color-tattoo-gelsenkirchen
+npx wrangler pages secret put PAYPAL_WEBHOOK_ID --project-name beauty-color-tattoo-gelsenkirchen
+```
+Webhook-URL im PayPal-Dashboard:
+`https://beauty-color-tattoo-gelsenkirchen.pages.dev/api/shop/paypal/webhook`
+Events: **PAYMENT.CAPTURE.COMPLETED** und **CHECKOUT.ORDER.COMPLETED**.
+
+Zuletzt `PAYPAL_ENV` von `"sandbox"` auf `"live"` stellen (`wrangler.toml` oder als Variable).
+Solange die Secrets fehlen, zeigt der Shop automatisch den WhatsApp-Fallback — es entsteht
+nie eine halbfertige Bestellung.
+
+**Ratenzahlung / 30 Tage Zahlpause** sind bereits aktiviert (`enable-funding=paylater` beim
+SDK-Laden). Ob sie einer Käuferin angeboten werden, entscheidet allein PayPal.
+
+### Lokal testen ohne echte Zugangsdaten
+`functions/_shared/paypal.js` akzeptiert `PAYPAL_ENV="mock"` zusammen mit `PAYPAL_MOCK_BASE`.
+Damit lässt sich die komplette Kette (Order → Capture → Webhook → Gutschein) gegen einen
+lokalen Nachbau der PayPal-API durchspielen — genau so wurde sie geprüft. In Produktion steht
+`PAYPAL_ENV` auf `live`/`sandbox`, der Zweig ist dort unerreichbar.
+
+### E-Mail — was mit der alten Lösung ist
+Der bisherige Gutscheinversand steckt im **IONOS-eCommerce-Backend** des alten Auftritts
+(die alte Seite ist eine IONOS-MyWebsite mit IONOS-Shop, nicht GoDaddy). Er wird nur ausgelöst,
+wenn eine Bestellung **in diesem** Shop entsteht, und bietet weder API noch Template-Export.
+Für einen eigenen Shop ist er damit technisch nicht nutzbar — unabhängig davon, ob der
+IONOS-Vertrag bestehen bleibt.
+
+Cloudflare selbst kann keine Mails an beliebige Empfänger senden (Email Routing ist eingehend;
+das `send_email`-Binding darf nur an **verifizierte** Adressen zustellen). MailChannels, früher
+der kostenlose Weg aus Workers heraus, ist seit 2024 kostenpflichtig.
+
+**Der Shop funktioniert ohne E-Mail vollständig:** Der Code erscheint sofort auf der
+Bestätigungsseite, ist dauerhaft unter `/voucher/<code>` abrufbar und dort ausdruckbar; im
+Admin stehen alle Bestellungen samt Codes. Der Bestätigungstext sagt ehrlich, ob eine Mail
+unterwegs ist (`emailed`-Flag aus `capture-order`).
+
+Soll zusätzlich automatisch eine Gutschein-Mail rausgehen, genügt **ein** Zugang — der Code
+erkennt selbst, welcher gesetzt ist:
+
+| Variablen | Anbieter |
+|---|---|
+| `MAIL_FROM` + `RESEND_API_KEY` | Resend (kostenloses Kontingent, schnellste Einrichtung) |
+| `MAIL_FROM` + `BREVO_API_KEY` | Brevo |
+| `MAIL_FROM` + `MAILCHANNELS_API_KEY` | MailChannels (kostenpflichtig) |
+
+`MAIL_FROM` muss beim jeweiligen Anbieter als Absender verifiziert sein.
 
 ## Testen (mit PayPal Sandbox)
 `PAYPAL_ENV=sandbox` + Sandbox-Client-ID/Secret/Webhook-ID.

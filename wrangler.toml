@@ -43,4 +43,8 @@ PAYPAL_ENV = "sandbox"                 # "sandbox" zum Testen, "live" für echte
 #   PAYPAL_SECRET      (streng geheim)
 #   PAYPAL_WEBHOOK_ID  (aus der PayPal-Webhook-Konfiguration)
 #
+# OPTIONAL — automatischer Gutschein-Versand per E-Mail (der Shop laeuft auch ohne):
+#   MAIL_FROM          verifizierte Absenderadresse
+#   + genau EINER davon: RESEND_API_KEY | BREVO_API_KEY | MAILCHANNELS_API_KEY
+#
 # Lokal testen: npx wrangler pages dev . --d1 DB --r2 NEWS_BUCKET --binding ADMIN_PASSWORD=<test>

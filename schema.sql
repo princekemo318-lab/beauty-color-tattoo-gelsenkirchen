@@ -45,3 +45,15 @@ CREATE TABLE IF NOT EXISTS vouchers (
   redeemed_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_vouchers_order ON vouchers (order_id);
+
+-- ========== NEWS-BILDER (Fallback ohne R2) ==========
+-- Bilder liegen in R2, sobald das Binding NEWS_BUCKET existiert. Ist R2 im Konto nicht
+-- freigeschaltet, speichert die API die (klein gerechneten) Bilder hier — dadurch
+-- funktioniert der Bild-Upload ohne jede weitere Cloudflare-Einrichtung.
+CREATE TABLE IF NOT EXISTS images (
+  key          TEXT    PRIMARY KEY,          -- news/<uuid>.<ext>
+  content_type TEXT    NOT NULL,
+  bytes        BLOB    NOT NULL,
+  size         INTEGER NOT NULL,
+  created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+);

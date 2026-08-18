@@ -2,9 +2,12 @@
 // Required env: PAYPAL_CLIENT_ID, PAYPAL_SECRET, PAYPAL_WEBHOOK_ID, PAYPAL_ENV ("live"|"sandbox").
 
 export function apiBase(env) {
-  return (env.PAYPAL_ENV || "sandbox") === "live"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com";
+  const mode = env.PAYPAL_ENV || "sandbox";
+  // NUR fuer lokale Tests: PAYPAL_ENV="mock" + PAYPAL_MOCK_BASE zeigt auf einen lokalen
+  // Nachbau der PayPal-API. In Produktion steht PAYPAL_ENV auf "live" bzw. "sandbox",
+  // damit ist dieser Zweig dort unerreichbar.
+  if (mode === "mock" && env.PAYPAL_MOCK_BASE) return env.PAYPAL_MOCK_BASE;
+  return mode === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
 }
 
 export function isConfigured(env) {

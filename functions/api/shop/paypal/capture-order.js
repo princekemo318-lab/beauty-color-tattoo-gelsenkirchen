@@ -2,7 +2,7 @@
 import { json } from "../../../_shared/auth.js";
 import { isConfigured, captureOrder, getOrder } from "../../../_shared/paypal.js";
 import { markPaidAndIssue, loadVouchers } from "../../../_shared/fulfil.js";
-import { sendVoucherEmail } from "../../../_shared/email.js";
+import { sendVoucherEmail, mailProvider } from "../../../_shared/email.js";
 
 export async function onRequestPost({ request, env }) {
   if (!env.DB || !isConfigured(env)) return json({ error: "Shop nicht konfiguriert" }, 503);
@@ -18,7 +18,7 @@ export async function onRequestPost({ request, env }) {
   // Already fulfilled? Return existing vouchers (idempotent, e.g. double-click or webhook first).
   if (row.status === "paid") {
     const vouchers = await loadVouchers(env, row.id);
-    return json({ ok: true, vouchers: pub(vouchers), voucherUrl: url(vouchers) });
+    return json({ ok: true, vouchers: pub(vouchers), voucherUrl: url(vouchers), emailed: !!mailProvider(env) });
   }
 
   // Capture (or detect an already-completed order).
@@ -46,18 +46,22 @@ export async function onRequestPost({ request, env }) {
 
   const { vouchers, alreadyIssued } = await markPaidAndIssue(env, row);
 
+  let emailed = false;
   if (!alreadyIssued) {
-    // Best-effort email — must not break the (already captured) payment.
+    // Best-effort E-Mail — darf die bereits erfolgte Zahlung nie kippen.
     try {
       const origin = new URL(request.url).origin;
-      await sendVoucherEmail(env, {
+      const mail = await sendVoucherEmail(env, {
         to: row.customer_email, name: row.customer_name,
         order: row, vouchers, origin,
       });
-    } catch { /* ignore */ }
+      emailed = !!(mail && mail.sent);
+    } catch { /* egal */ }
+  } else {
+    emailed = !!mailProvider(env);
   }
 
-  return json({ ok: true, vouchers: pub(vouchers), voucherUrl: url(vouchers) }, 200);
+  return json({ ok: true, vouchers: pub(vouchers), voucherUrl: url(vouchers), emailed }, 200);
 }
 
 function capturedAmount(orderData) {
